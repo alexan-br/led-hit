@@ -28,10 +28,6 @@ const char* password = "bakanoconnection";
 WebServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
 
-const int led = 2;
-bool etatLed = 0;
-char texteEtatLed[2][10] = {"ÉTEINTE!","ALLUMÉE!"};
-
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
   switch (type) {
     case WStype_DISCONNECTED:
@@ -73,8 +69,9 @@ void handleRoot()
     page += "    <h1>Leds Hit</h1>";
     page += "    <img src='https://i.pinimg.com/originals/ba/ce/57/bace57c5e51b79fa303026d754fef8b5.gif'>";
     page += "    <p class='niveau-en-direct'>Niveau : <span id='niveau'>";page += niveauActuelle; +"</span></p>";
-    page += "    <p class='score-en-direct'>Score : <span id='score'>";page += score; +"</span></p>";
-    page += "    <style> @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap'); * { margin: 0; padding: 0; box-sizing: border-box; } body { color: white; display: flex; justify-content: center; flex-direction: column; align-items: center; height: 100vh; font-family: 'Archivo Black', sans-serif; font-weight: 400; font-style: normal; background-color: #010000; } h1 { font-size: 3rem; margin-bottom: 1rem; } p { font-size: 5rem; margin-bottom: 1rem; } span { font-weight: bold; } </style>";
+    page += "    <p class='score-en-direct'>Score : <span id='score'>";page += score; +"</span>";
+    page += "    </p>";
+    page += "    <style> @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap'); * { margin: 0; padding: 0; box-sizing: border-box; } body { overflow: hidden; color: white; display: flex; justify-content: center; flex-direction: column; align-items: center; height: 100vh; font-family: 'Archivo Black', sans-serif; font-weight: 400; font-style: normal; background-color: #010000; } h1 { font-size: 3rem; margin-bottom: 1rem; } p { font-size: 5rem; margin-bottom: 1rem; } span { font-weight: bold; } </style>";
     page += "<script type='text/javascript'>";
     page += "document.addEventListener('DOMContentLoaded', () => {";
     page += "    const score = document.getElementById('score');";
@@ -85,6 +82,7 @@ void handleRoot()
     page += "    socketScore.onmessage = function(event) {";
     page += "        document.getElementById('score').innerHTML = event.data;";
     page += "        niveau.textContent = Math.floor(parseInt(event.data) / 12) + 1;";
+    page += "        const bodySpinning = [ { transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }, ]; document.body.animate(bodySpinning, 250)";
     page += "    };";
     page += "});";
     page += "</script>";
@@ -95,21 +93,6 @@ void handleRoot()
 
     server.setContentLength(page.length());
     server.send(200, "text/html", page);
-}
-void handleOn()
-{
-    etatLed = 1;
-    digitalWrite(led, HIGH);
-    server.sendHeader("Location","/");
-    server.send(303);
-}
-
-void handleOff()
-{
-    etatLed = 0;
-    digitalWrite(led, LOW);
-    server.sendHeader("Location","/");
-    server.send(303);
 }
 
 void handleNotFound()
@@ -123,11 +106,11 @@ void setup() {
     WiFi.begin(ssid, password);
     Serial.print("Tentative de connexion...");
 
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        Serial.print(".");
-        delay(100);
-    }
+    // while (WiFi.status() != WL_CONNECTED)
+    // {
+    //     Serial.print(".");
+    //     delay(100);
+    // }
   server.on("/", handleRoot);
     // server.on("/on", handleOn);
     // server.on("/off", handleOff);
@@ -160,9 +143,9 @@ void loop() {
           FastLED.show();
        }
     lcd.setCursor(0, 0);
-    lcd.print("    Jouer !    ");
-    lcd.setCursor(3, 1);
-    lcd.print("v Clique v");
+    lcd.print("     Jouer!     ");
+    lcd.setCursor(0, 1);
+    lcd.print("   v Clique v   ");
  
     if (digitalRead(BUTTON_PIN) == LOW) { // Vérifie si le bouton est enfoncé
       while (digitalRead(BUTTON_PIN) == LOW) {} // Attend que le bouton soit relâché pour éviter le rebondissement
@@ -175,7 +158,7 @@ void loop() {
   }
   if(gameOver){
       lcd.setCursor(0, 0);
-      lcd.print("   Perdu!   ");
+      lcd.print("    Perdu!   ");
         for (int LedPosition = 0; LedPosition < NUM_LEDS; LedPosition++) {
           leds[LedPosition] = CRGB::Red;
           ledState[LedPosition] = false;
@@ -196,11 +179,11 @@ void LoopDeJeu(){
       FastLED.show();
  
       lcd.setCursor(0, 0);
-      lcd.print("Niveau : ");
+      lcd.print("   Niveau : ");
       lcd.print(niveauActuelle);
       lcd.print("   ");
-      lcd.setCursor(3, 1);
-      lcd.print("Score: ");
+      lcd.setCursor(0, 1);
+      lcd.print("   Score: ");
       lcd.print(score);
       lcd.print("   ");
  
