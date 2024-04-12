@@ -32,7 +32,7 @@ Connectez les composants selon le schéma suivant :
 
 ![Schéma du Projet](schema.PNG)
 
-- ESP32 Wroom 32 :
+- ESP32 Wroom 32 : Microcontrôleur WiFi et Bluetooth polyvalent.
 - Écran LCD : Utilisez l'I2C (SDA et SCL) pour la connexion.
 - RGB LED Ring : Connectez le pin de données à la broche définie dans le code (DATA_PIN).
 - Bouton poussoir : Connectez-le à la broche définie dans le code (BUTTON_PIN).
