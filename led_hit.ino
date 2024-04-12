@@ -70,15 +70,24 @@ void handleRoot()
     page += "</head>";
 
     page += "<body>";
-    page += "    <h1>Score</h1>";
-    page += "    <p class='score-en-direct' id='score'>Score : ";page += score; +"</p>";
-    page += "    <div class='perdu'>";
-    page += "        <p>Vous avez perdu.</p>";
-    page += "        <p>Votre score : ";page += score; +" Final</p>";
-    page += "        <p id='responseData'></p>";
-    page += "    </div>";
-    page += "    <style> @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap'); * { margin: 0; padding: 0; box-sizing: border-box; } body { display: flex; justify-content: center; flex-direction: column; align-items: center; height: 100vh; font-family: 'Archivo Black', sans-serif; font-weight: 400; font-style: normal; } h1 { font-size: 3rem; margin-bottom: 1rem; } p { font-size: 5rem; margin-bottom: 1rem; } .perdu { display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #f8d7da; padding: 1rem; border-radius: 5px; } .perdu p { margin-bottom: 0.5rem; } span { font-weight: bold; } </style>";
-    page += "    <script type='text/javascript'>var socket = new WebSocket('ws://' + window.location.hostname + ':81/');socket.onmessage = function(event) {document.getElementById('score').innerHTML = event.data;};</script>";
+    page += "    <h1>Leds Hit</h1>";
+    page += "    <img src='https://i.pinimg.com/originals/ba/ce/57/bace57c5e51b79fa303026d754fef8b5.gif'>";
+    page += "    <p class='niveau-en-direct'>Niveau : <span id='niveau'>";page += niveauActuelle; +"</span></p>";
+    page += "    <p class='score-en-direct'>Score : <span id='score'>";page += score; +"</span></p>";
+    page += "    <style> @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap'); * { margin: 0; padding: 0; box-sizing: border-box; } body { color: white; display: flex; justify-content: center; flex-direction: column; align-items: center; height: 100vh; font-family: 'Archivo Black', sans-serif; font-weight: 400; font-style: normal; background-color: #010000; } h1 { font-size: 3rem; margin-bottom: 1rem; } p { font-size: 5rem; margin-bottom: 1rem; } span { font-weight: bold; } </style>";
+    page += "<script type='text/javascript'>";
+    page += "document.addEventListener('DOMContentLoaded', () => {";
+    page += "    const score = document.getElementById('score');";
+    page += "    const niveau = document.getElementById('niveau');";
+    page += "    const perdu = document.querySelector('.perdu');";
+    page += "    const scoreFinal = ";page += score; +";";
+    page += "    ;var socketScore = new WebSocket('ws://' + window.location.hostname + ':81/');";
+    page += "    socketScore.onmessage = function(event) {";
+    page += "        document.getElementById('score').innerHTML = event.data;";
+    page += "        niveau.textContent = Math.floor(parseInt(event.data) / 12) + 1;";
+    page += "    };";
+    page += "});";
+    page += "</script>";
     page += "</body>";
 
     page += "</html>";
@@ -199,7 +208,7 @@ void LoopDeJeu(){
         if(digitalRead(BUTTON_PIN) == LOW && !isclicked) {
           score++;
           isclicked = true; // Utilisez l'opérateur d'assignation pour mettre isclicked à true
-          webSocket.broadcastTXT("Score : " + String(score));
+          webSocket.broadcastTXT(""+String(score));
           if(ledState[LedPosition] == true) {
             LedPosition = 11;
             gameOver = true;
@@ -213,7 +222,6 @@ void LoopDeJeu(){
             NombreLedValide = 0;
               vitesse = vitesse/1.5;
               niveauActuelle = niveauActuelle + 1;
-              // webSocket.broadcastTXT("Niveau " + String(niveauActuelle));
                for (int ResetLed = 0; ResetLed < NUM_LEDS; ResetLed++) {
                   ledState[ResetLed] = false;
                   leds[ResetLed] = CRGB::Black;
