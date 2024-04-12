@@ -5,14 +5,19 @@
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 
+// Définition du nombre de LEDs et du pin de données
 #define NUM_LEDS 12
 #define DATA_PIN 19
 #define BUTTON_PIN 26
 
+// Initialisation de l'écran LCD
 LiquidCrystal_I2C lcd(0x27, 16, 2);
-CRGB leds[NUM_LEDS];
 
+// Déclaration d'un tableau pour stocker l'état des LEDs
+CRGB leds[NUM_LEDS];
 bool ledState[NUM_LEDS]; // Array to store LED states (true = clicked, false = not clicked)
+
+// Déclaration de variables de contrôle du jeu
 bool buttonPressed = false; // Variable pour suivre l'état du bouton
 bool isclicked = false;
 bool started = false;
@@ -22,12 +27,15 @@ int NombreLedValide = 0;
 int score = 0; 
 int niveauActuelle = 1;
 
+// Paramètres du réseau WiFi
 const char* ssid = "HUAWEI P30 lite";
 const char* password = "bakanoconnection";
-// Set your server URL
+
+// Création d'un serveur Web
 WebServer server(80);
 WebSocketsServer webSocket = WebSocketsServer(81);
 
+// Fonction pour gérer les événements du WebSocket
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
   switch (type) {
     case WStype_DISCONNECTED:
@@ -53,8 +61,10 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
   }
 }
 
+// Fonction pour gérer la page d'accueil du serveur Web
 void handleRoot()
 {
+    // Construction de la page HTML à envoyer
     String page = "<!DOCTYPE html>";
 
     page += "<html lang='fr'>";
@@ -90,63 +100,78 @@ void handleRoot()
 
     page += "</html>";
 
-
+    // Envoi de la page au client
     server.setContentLength(page.length());
     server.send(200, "text/html", page);
 }
 
-void handleNotFound()
-{
+// Fonction pour gérer les requêtes non trouvées
+void handleNotFound() {
     server.send(404, "text/plain", "404: Not found");
 }
 
 void setup() {
+  // Initialisation de la communication série
   Serial.begin(9600);
+  
+  // Connexion au réseau WiFi
   WiFi.persistent(false);
-    WiFi.begin(ssid, password);
-    Serial.print("Tentative de connexion...");
-
+  WiFi.begin(ssid, password);
+  Serial.print("Tentative de connexion...");
     // while (WiFi.status() != WL_CONNECTED)
     // {
     //     Serial.print(".");
     //     delay(100);
     // }
+  
+  // Configuration des routes du serveur Web
   server.on("/", handleRoot);
-    // server.on("/on", handleOn);
-    // server.on("/off", handleOff);
-    server.onNotFound(handleNotFound);
-    server.begin();
+  server.onNotFound(handleNotFound);
+  server.begin();
+
+  // Initialisation du serveur WebSocket
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
-    
+  
+  // Initialisation de l'écran LCD
   lcd.init();
   lcd.backlight();
-    FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
-    pinMode(BUTTON_PIN, INPUT_PULLUP);
-    // Initialize LED states to false (not clicked)
-    for (int i = 0; i < NUM_LEDS; i++) {
-        ledState[i] = false;
-    }
+
+  // Configuration des LEDs
+  FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  
+  // Initialisation de l'état des LEDs à false (non cliquées)
+  for (int i = 0; i < NUM_LEDS; i++) {
+    ledState[i] = false;
+  }
 }
+
 void loop() {
+  // Gestion des requêtes HTTP du serveur Web
   server.handleClient();
+  // Gestion des événements du serveur WebSocket
   webSocket.loop();
 
+  // Logique du jeu
   if(!started && !gameOver) {
+    // Initialisation des paramètres du jeu
     score = 0;
-     NombreLedValide = 0;
-     niveauActuelle = 1;
-     vitesse = 400;
-     for (int LedPosition = 0; LedPosition < NUM_LEDS; LedPosition++) {
-          leds[LedPosition] = CRGB::Black;
-          ledState[LedPosition] = false;
-          FastLED.show();
-       }
+    NombreLedValide = 0;
+    niveauActuelle = 1;
+    vitesse = 400;
+    // Réinitialisation des LEDs et affichage du message de démarrage
+    for (int LedPosition = 0; LedPosition < NUM_LEDS; LedPosition++) {
+      leds[LedPosition] = CRGB::Black;
+      ledState[LedPosition] = false;
+      FastLED.show();
+    }
     lcd.setCursor(0, 0);
     lcd.print("     Jouer!     ");
     lcd.setCursor(0, 1);
     lcd.print("   v Clique v   ");
- 
+    
+    // Attente du clic sur le bouton pour démarrer le jeu
     if (digitalRead(BUTTON_PIN) == LOW) { // Vérifie si le bouton est enfoncé
       while (digitalRead(BUTTON_PIN) == LOW) {} // Attend que le bouton soit relâché pour éviter le rebondissement
       started = true; // Inverse l'état de démarrage lorsque le bouton est enfoncé
@@ -154,30 +179,34 @@ void loop() {
  
   }
   if(!gameOver && started){
+    // Exécution de la boucle de jeu
     LoopDeJeu();
   }
   if(gameOver){
+      // Affichage du message de fin de jeu en cas de défaite
       lcd.setCursor(0, 0);
       lcd.print("    Perdu!   ");
-        for (int LedPosition = 0; LedPosition < NUM_LEDS; LedPosition++) {
-          leds[LedPosition] = CRGB::Red;
-          ledState[LedPosition] = false;
-          FastLED.show();
-        }
- 
-        if (digitalRead(BUTTON_PIN) == LOW) { // Vérifie si le bouton est enfoncé
+      // Allumage des LEDs en rouge
+      for (int LedPosition = 0; LedPosition < NUM_LEDS; LedPosition++) {
+        leds[LedPosition] = CRGB::Red;
+        ledState[LedPosition] = false;
+        FastLED.show();
+      }
+      // Attente du clic sur le bouton pour rejouer
+      if (digitalRead(BUTTON_PIN) == LOW) { // Vérifie si le bouton est enfoncé
         while (digitalRead(BUTTON_PIN) == LOW) {} // Attend que le bouton soit relâché pour éviter le rebondissement
           gameOver = false; // Inverse l'état de démarrage lorsque le bouton est enfoncé
           started = false; // Inverse l'état de démarrage lorsque le bouton est 
       }
   }
 }
- 
+
+// Fonction contenant la logique de jeu
 void LoopDeJeu(){
    for (int LedPosition = 0; LedPosition < NUM_LEDS; LedPosition++) {
       leds[LedPosition] = CRGB::Blue;
       FastLED.show();
- 
+      // Affichage du niveau et du score sur l'écran LCD
       lcd.setCursor(0, 0);
       lcd.print("   Niveau : ");
       lcd.print(niveauActuelle);
@@ -186,12 +215,13 @@ void LoopDeJeu(){
       lcd.print("   Score: ");
       lcd.print(score);
       lcd.print("   ");
- 
+      // Attente d'un clic sur le bouton
       for (int j = 0; j < vitesse; j++) {
         if(digitalRead(BUTTON_PIN) == LOW && !isclicked) {
           score++;
           isclicked = true; // Utilisez l'opérateur d'assignation pour mettre isclicked à true
           webSocket.broadcastTXT(""+String(score));
+          // Vérification si la LED actuelle a déjà été cliquée
           if(ledState[LedPosition] == true) {
             LedPosition = 11;
             gameOver = true;
@@ -199,12 +229,13 @@ void LoopDeJeu(){
           }
           ledState[LedPosition] = true;  
           NombreLedValide = NombreLedValide + 1;
- 
+          // Passage au niveau suivant si toutes les LEDs ont été cliquées
           if(NombreLedValide == NUM_LEDS){
             lcd.setCursor(0, 0);
             NombreLedValide = 0;
               vitesse = vitesse/1.5;
               niveauActuelle = niveauActuelle + 1;
+              // Réinitialisation des LEDs pour le nouveau niveau
                for (int ResetLed = 0; ResetLed < NUM_LEDS; ResetLed++) {
                   ledState[ResetLed] = false;
                   leds[ResetLed] = CRGB::Black;
@@ -212,14 +243,14 @@ void LoopDeJeu(){
               }
           }
         }
- 
+        // Réinitialisation du clic après relâchement du bouton
         if(digitalRead(BUTTON_PIN) == HIGH) {
           isclicked = false;
         }
- 
         delay(1);
       }
- 
+     
+      // Allumage de la LED en vert si elle a été cliquée
       if (ledState[LedPosition] == true) {
         leds[LedPosition] = CRGB::Green;
       } else {
