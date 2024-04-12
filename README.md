@@ -30,7 +30,7 @@ Téléchargez les bibliothèques nécessaires :
 
 Connectez les composants selon le schéma suivant :
 
-![Schéma du Projet](schema.png)
+![Schéma du Projet](schema.PNG)
 
 - ESP32 Wroom 32 :
 - Écran LCD : Utilisez l'I2C (SDA et SCL) pour la connexion.
