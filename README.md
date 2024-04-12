@@ -30,7 +30,7 @@ Téléchargez les bibliothèques nécessaires :
 
 Connectez les composants selon le schéma suivant :
 
-![Schéma du Projet](schema.PNG)
+![Schéma du Projet](images/schema.png)
 
 - ESP32 Wroom 32 :
 - Écran LCD : Utilisez l'I2C (SDA et SCL) pour la connexion.
@@ -59,11 +59,21 @@ Le code met en place un serveur Web pour afficher le score et contrôler une LED
 
 ### 4. Initialisation du Matériel
 
-La fonction setup() initialise les composants matériels et établit la connexion Wi-Fi.
+La fonction setup() initialise les composants matériels et établit la connexion Wi-Fi avec votre identifiant et mot de passe de connexion.
 
 ### 5. Boucle Principale
 
-La fonction loop() gère le déroulement du jeu, la mise à jour de l'écran LCD et la vérification de l'état du bouton.
+La fonction loop() gère le déroulement du jeu, la mise à jour de l'écran LCD et la vérification de l'état du bouton. Voici une explication détaillée de la boucle principale de jeu :
+
+#### Boucle Principale de Jeu
+
+La fonction `LoopDeJeu()` est responsable de la gestion du déroulement du jeu.
+
+- Nous itérons à travers chaque LED du ring RGB et les mettons toutes en bleu.
+- Ensuite, nous mettons à jour l'écran LCD avec le niveau actuel et le score.
+- Nous attendons un certain nombre de cycles pour chaque LED (défini par `vitesse`).
+- Pendant ce temps, nous vérifions si le bouton poussoir est enfoncé. Si c'est le cas, nous incrémentons le score, envoyons le nouveau score via WebSocket et vérifions si la LED à cette position est déjà activée. Si c'est le cas, le jeu se termine. Sinon, nous activons la LED, mettons à jour le nombre de LEDs valides et vérifions si toutes les LEDs ont été activées. Si c'est le cas, nous passons au niveau suivant en augmentant la vitesse et en réinitialisant les LEDs. Enfin, nous réinitialisons `isclicked` lorsque le bouton est relâché.
+- Enfin, nous mettons à jour la couleur de la LED en fonction de son état (activée ou désactivée).
 
 ## Conclusion
 
